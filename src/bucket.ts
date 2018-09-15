@@ -18,7 +18,7 @@
 
 import * as arrify from 'arrify';
 import * as async from 'async';
-import {ServiceObject, util, DeleteCallback} from '@google-cloud/common';
+import {ServiceObject, util, DeleteCallback, Metadata, ResponseCallback, SetMetadataResponse} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as extend from 'extend';
@@ -283,6 +283,28 @@ export interface DeleteLabelsCallback {
 }
 
 /**
+ * @param {object} SetBucketMetadataRequest Configuration options for Bucket#setMetadata().
+ * @param {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface SetBucketMetadataRequest {
+  userProject?: string;
+}
+
+/**
+ * @callback SetBucketMetadataCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+export interface SetBucketMetadataCallback extends ResponseCallback { }
+
+/**
+ * @typedef {array} SetBucketMetadataResponse
+ * @property {object} 0 The full API response.
+ */
+export type SetBucketMetadataResponse = SetMetadataResponse;
+
+/**
  * @typedef {array} DisableRequesterPaysResponse
  * @property {object} 0 The full API response.
  */
@@ -309,7 +331,7 @@ export type EnableRequesterPaysResponse = [object];
  * @param {object} apiResponse The full API response.
  */
 export interface EnableRequesterPaysCallback {
-  (err: Error|null, apiResponse: object);
+  (err: Error|null, apiResponse?: object);
 }
 
 /**
@@ -2113,23 +2135,12 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} SetBucketMetadataResponse
-   * @property {object} 0 The bucket metadata.
-   */
-  /**
-   * @callback SetBucketMetadataCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} metadata The bucket metadata.
-   */
-  /**
    * Set the bucket's metadata.
    *
    * @see [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
    *
-   * @param {object<string, *>} metadata The metadata you wish to set.
-   * @param {object} [options] Configuration options.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {Metadata} metadata The metadata you wish to set.
+   * @param {SetBucketMetadataRequest} [options] Configuration options.
    * @param {SetBucketMetadataCallback} [callback] Callback function.
    * @returns {Promise<SetBucketMetadataResponse>}
    *
@@ -2175,8 +2186,11 @@ class Bucket extends ServiceObject {
    *   const apiResponse = data[0];
    * });
    */
-  setMetadata(metadata, options, callback?) {
-    if (is.fn(options)) {
+  setMetadata(metadata: Metadata, options?: SetBucketMetadataRequest): Promise<SetBucketMetadataResponse>;
+  setMetadata(metadata: Metadata, callback: SetBucketMetadataCallback): void;
+  setMetadata(metadata: Metadata, options: SetBucketMetadataRequest, callback: SetBucketMetadataCallback): void;
+  setMetadata(metadata: Metadata, options?: SetBucketMetadataRequest|SetBucketMetadataCallback, callback?: SetBucketMetadataCallback): Promise<SetBucketMetadataResponse>|void {
+    if (typeof options === 'function') {
       callback = options;
       options = {};
     }
@@ -2192,13 +2206,13 @@ class Bucket extends ServiceObject {
         },
         (err, resp) => {
           if (err) {
-            callback(err, resp);
+            callback!(err, resp);
             return;
           }
 
           this.metadata = resp;
 
-          callback(null, resp);
+          callback!(null, resp);
         });
   }
 
