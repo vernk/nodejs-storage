@@ -1159,6 +1159,7 @@ class File extends ServiceObject {
               'A resumable upload could not be performed. The directory,',
               `${configDir}, is not writable. You may try another upload,`,
               'this time setting `options.resumable` to `false`.',
+              err.message,
             ].join(' '));
             stream.destroy(error);
             return;
