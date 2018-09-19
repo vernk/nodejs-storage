@@ -1152,7 +1152,8 @@ class File extends ServiceObject {
       // https://github.com/yeoman/configstore/blob/f09f067e50e6a636cfc648a6fc36a522062bd49d/index.js#L11
       const configDir = xdgBasedir.config || os.tmpdir();
 
-      fs.access(configDir, fs.constants.W_OK, err => {
+      // tslint:disable-next-line:no-any
+      fs.access(configDir, (fs as any).W_OK, err => {
         if (err) {
           if (options.resumable) {
             const error = new ResumableUploadError([
